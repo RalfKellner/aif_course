@@ -42,7 +42,7 @@ def ai_trade_performance(environment, agent, seeds = [], num_plays = 20, plot_re
     market_retrisk = np.mean(m_retrisk)
     agent_retrisk_better = np.mean(f_retrisk > m_retrisk)
     
-    y_lim_max = max(max(f_navs, m_navs))
+    y_lim_max = max(max(f_navs), max(m_navs))
 
     if plot_results:
         fig, axs = plt.subplots(1, 3, figsize = (18, 6))
