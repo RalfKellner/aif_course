@@ -42,6 +42,8 @@ def ai_trade_performance(environment, agent, seeds = [], num_plays = 20, plot_re
     market_retrisk = np.mean(m_retrisk)
     agent_retrisk_better = np.mean(f_retrisk > m_retrisk)
     
+    y_lim_max = max(max(final_navs, final_market_navs))
+
     if plot_results:
         fig, axs = plt.subplots(1, 3, figsize = (18, 6))
 
@@ -50,18 +52,18 @@ def ai_trade_performance(environment, agent, seeds = [], num_plays = 20, plot_re
             axs[0].set_title('Trained agent')
             axs[0].set_xlabel('Trading days')
             axs[0].set_ylabel('Net asset value')
-            axs[0].set_ylim(0, 2.5)
+            axs[0].set_ylim(0, y_lim_max)
             axs[1].plot(final_market_navs[i])
             axs[1].set_title('Buy and hold')
             axs[1].set_xlabel('Trading days')
             axs[1].set_ylabel('Net asset value')
-            axs[1].set_ylim(0, 2.5)
+            axs[1].set_ylim(0, y_lim_max)
             axs[2].scatter(final_market_navs[i][-1], final_navs[i][-1])
             axs[2].set_title('Buy and hold vs. Agent')
             axs[2].set_xlabel('Buy and hold NAV')
             axs[2].set_ylabel('Agent NAV')
-            axs[2].set_xlim(0, 2.5)
-            axs[2].set_ylim(0, 2.5)
+            axs[2].set_xlim(0, y_lim_max)
+            axs[2].set_ylim(0, y_lim_max)
             line = mlines.Line2D([0, 1], [0, 1], color='grey')
             transform = axs[2].transAxes
             line.set_transform(transform)
