@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 # a class for downloading and processing of stock data
 class DataLoader():
-    def __init__(self, ticker, start_date, end_date, use_variables = [], trading_days = 252):
+    def __init__(self, ticker, start_date, end_date, use_variables = [], scaler = None, trading_days = 252):
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
@@ -19,6 +19,13 @@ class DataLoader():
         
         self.load_data()
         self.preprocess_data()
+
+        if scaler:
+            self.scaler = scaler
+        else:
+            self.scaler = StandardScaler()
+            self.scaler.fit(self.df.drop(['returns'], axis = 1).values)
+
         
         self.rnd_seeds = []
 
@@ -79,7 +86,7 @@ class DataLoader():
         print(f'This equals {(dropped_obs / n_obs_before)*100:.2f}% of the data')
 
         # this ensures to have a decent amount of observations to train the agent
-        assert len(self.df) > self.trading_days, f'Data needs to inlude at least {self.trading_days} observations! Choose a longer time period...'
+        assert len(self.df) > 2*self.trading_days, f'Data needs to inlude at least {2*self.trading_days} observations! Choose a longer time period...'
         print(f'Time period used for training or testing starts at:{self.df.index[self.trading_days]} and ends at: {self.df.index[-1]}')
         self.min_values = self.df.min()
         self.max_values = self.df.max()
@@ -97,8 +104,6 @@ class DataLoader():
             np.random.seed(seed)
 
         self.offset = np.random.randint(low = self.trading_days, high = high)
-        self.scaler = StandardScaler()
-        self.scaler.fit(self.df.drop(['returns'], axis = 1).iloc[(self.offset-self.trading_days):self.offset].values)
         self.step = 0
         
     def take_step(self):        
