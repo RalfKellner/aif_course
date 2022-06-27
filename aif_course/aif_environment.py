@@ -79,7 +79,7 @@ class DataLoader():
         print(f'This equals {(dropped_obs / n_obs_before)*100:.2f}% of the data')
 
         # this ensures to have a decent amount of observations to train the agent
-        assert len(self.df) > 3*self.trading_days, f'Data needs to inlude at least {3*self.trading_days} observations! Choose a longer time period...'
+        assert len(self.df) > self.trading_days, f'Data needs to inlude at least {self.trading_days} observations! Choose a longer time period...'
         self.min_values = self.df.min()
         self.max_values = self.df.max()
 
