@@ -117,7 +117,7 @@ class DataLoader():
     
     # some utility functions, not for direct use
     def get_scaled_df_full_(self):
-        states_scaled = self.scaler.transform(self.df.drop(['returns'].values, axis = 1))
+        states_scaled = self.scaler.transform(self.df.drop(['returns'], axis = 1)).values
         obs_full = np.concatenate((self.df[['returns']].values, states_scaled), axis = 1)
         return obs_full
     
