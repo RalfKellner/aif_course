@@ -80,6 +80,7 @@ class DataLoader():
 
         # this ensures to have a decent amount of observations to train the agent
         assert len(self.df) > self.trading_days, f'Data needs to inlude at least {self.trading_days} observations! Choose a longer time period...'
+        print(f'Time period used for training or testing starts at:{self.df.index[self.trading_days]} and ends at: {self.df.index[-1]}')
         self.min_values = self.df.min()
         self.max_values = self.df.max()
 
@@ -95,9 +96,9 @@ class DataLoader():
         if seed:
             np.random.seed(seed)
 
-        self.offset = np.random.randint(low = self.trading_days*2, high = high)
+        self.offset = np.random.randint(low = self.trading_days, high = high)
         self.scaler = StandardScaler()
-        self.scaler.fit(self.df.drop(['returns'], axis = 1).iloc[(self.offset-self.trading_days*2):self.offset].values)
+        self.scaler.fit(self.df.drop(['returns'], axis = 1).iloc[(self.offset-self.trading_days):self.offset].values)
         self.step = 0
         
     def take_step(self):        
