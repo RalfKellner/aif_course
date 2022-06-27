@@ -117,9 +117,7 @@ class DataLoader():
     
     # some utility functions, not for direct use
     def get_scaled_df_full_(self):
-        self.full_scaler = StandardScaler()
-        self.full_scaler.fit(self.df.drop(['returns'], axis = 1))
-        states_scaled = self.full_scaler.transform(self.df.drop(['returns'], axis = 1))
+        states_scaled = self.scaler.transform(self.df.drop(['returns'].values, axis = 1))
         obs_full = np.concatenate((self.df[['returns']].values, states_scaled), axis = 1)
         return obs_full
     
@@ -293,12 +291,14 @@ class TradingEnvironment(gym.Env):
                  trading_days=252,
                  trading_cost_bps=1e-3,
                  time_cost_bps=1e-4,
-                 use_variables = []):
+                 use_variables = [],
+                 scaler = None):
         
         self.data_source = DataLoader(ticker = ticker,
                                       start_date = start_date,
                                       end_date = end_date,
                                       use_variables = use_variables,
+                                      scaler = scaler,
                                       trading_days = trading_days)
         
         self.simulator = TradingSimulator(trading_days = trading_days,
