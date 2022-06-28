@@ -78,7 +78,7 @@ def ai_trade_performance(environment, agent, seeds = [], num_plays = 20, plot_re
     results = pd.DataFrame(data = results_data, columns = ['agent_avg', 'market_avg', 'agent_better'])
     results.index = ['return', 'return_risk']
     
-    return results
+    return results, f_navs, m_navs
 
 # a helper function for getting the gradients of the a2c network
 def get_action_gradients_(states_tf, action_vec, actor_net):

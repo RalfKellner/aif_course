@@ -286,8 +286,8 @@ class TradingEnvironment(gym.Env):
     """
     def __init__(self,
                  ticker='AAPL',
-                 start_date = '2009-06-01',
-                 end_date = '2015-12-31',
+                 start_date = '2012-01-01',
+                 end_date = '2017-12-31',
                  trading_days=252,
                  trading_cost_bps=1e-3,
                  time_cost_bps=1e-4,
