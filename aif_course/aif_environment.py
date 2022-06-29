@@ -296,14 +296,16 @@ class TradingEnvironment(gym.Env):
                  trading_cost_bps=1e-3,
                  time_cost_bps=1e-4,
                  use_variables = [],
-                 scaler = None):
+                 scaler = None, 
+                 open_close_return = False):
         
         self.data_source = DataLoader(ticker = ticker,
                                       start_date = start_date,
                                       end_date = end_date,
                                       use_variables = use_variables,
                                       scaler = scaler,
-                                      trading_days = trading_days)
+                                      trading_days = trading_days,
+                                      open_close_return = open_close_return)
         
         self.simulator = TradingSimulator(trading_days = trading_days,
                                           trading_cost_bps = trading_cost_bps,
