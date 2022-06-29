@@ -10,12 +10,13 @@ from sklearn.preprocessing import StandardScaler
 
 # a class for downloading and processing of stock data
 class DataLoader():
-    def __init__(self, ticker, start_date, end_date, use_variables = [], scaler = None, trading_days = 252):
+    def __init__(self, ticker, start_date, end_date, use_variables = [], scaler = None, trading_days = 252, open_close_return = False):
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
         self.use_variables = use_variables
         self.trading_days = trading_days
+        self.open_close_return = open_close_return
         
         self.load_data()
         self.preprocess_data()
@@ -57,9 +58,12 @@ class DataLoader():
         use_variables, list of strings: names of technical indicators to use, e.g., ['AD', 'ABER_ZG_5_15']
         if None, all indicators are used
         '''
-
-        # calculate returns
-        self.df.loc[:, 'returns'] = np.log(self.df.Close) - np.log(self.df.Close.shift(1))
+        if self.open_close_return == True:
+            # calculate return from the beginning of the next trading day until the end of the trading day
+            self.df.loc[:, 'returns'] = np.log(self.df.Close) - np.log(self.df.Open)
+        else:
+            # calculate returns
+            self.df.loc[:, 'returns'] = np.log(self.df.Close) - np.log(self.df.Close.shift(1))
 
         # index of the return column to exclude raw data columns later
         idx = self.df.shape[1]
