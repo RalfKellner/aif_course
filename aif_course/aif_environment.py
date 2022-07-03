@@ -11,6 +11,19 @@ from sklearn.preprocessing import StandardScaler
 # a class for downloading and processing of stock data
 class DataLoader():
     def __init__(self, ticker, start_date, end_date, use_variables = [], scaler = None, trading_days = 252, open_close_return = False):
+
+        '''
+        ticker (string): ticker for the company
+        start_date (string): start date for company data, format YYYY-MM-DD
+        end_date (string): start date for company data, format YYYY-MM-DD
+        use_variables (list of strings): a list of technical indicators to be used as state variables, e.g., ['AD', 'ABER_ZG_5_15']
+        scaler: a scaler from the training data, only meant to be imported for test data
+        trading_days (int): the number of trading days per episode
+        open_close_return (boolean): set to true if returns are supposed to be calculated from the beginning of the next trading day until its end
+        '''
+
+
+
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
