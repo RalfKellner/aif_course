@@ -258,7 +258,8 @@ class TradingSimulator:
             self.navs[self.step] = start_nav * np.exp(self.strategy_returns[self.step])
             self.market_navs[self.step] = start_market_nav * np.exp(self.market_returns[self.step])
 
-        info = {'reward': reward,
+        info = {'position': self.positions[self.step],
+                'reward': reward,
                 'nav'   : self.navs[self.step],
                 'costs' : self.costs[self.step]}
 
