@@ -22,8 +22,6 @@ class DataLoader():
         open_close_return (boolean): set to true if returns are supposed to be calculated from the beginning of the next trading day until its end
         '''
 
-
-
         self.ticker = ticker
         self.start_date = start_date
         self.end_date = end_date
@@ -83,6 +81,8 @@ class DataLoader():
 
         # get all technical indicators first
         self.df.ta.strategy()
+        # delete all tis with potential leakage
+        self.df.drop(['DPO_20', 'ISA_9', 'ISB_26', 'ITS_9', 'ICS_26', 'IKS_26'], axis = 1, inplace = True)
 
         # default case, determine all indicators and delete columns with too many missing values
         if len(self.use_variables) == 0:
