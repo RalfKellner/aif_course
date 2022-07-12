@@ -103,6 +103,38 @@ def ai_trade_performance(environment, agent, seeds = [], num_plays = 20, plot_re
     
     return results, f_navs, m_navs
 
+# a function to analyze actions taken by a trained agent
+def analyze_actions_taken(environment, model, plot_actions = False):
+
+    '''
+    Use this function to evaluate how many times the trained agent would choose the actions 
+    short, cash and long over the whole time frame of the specified environment
+    '''
+    
+    # get all scaled state variable realizations
+    states = environment.data_source.get_scaled_df_full_()
+    # get a list of all actions taken in each state
+    actions_taken, _ = model.predict(states, deterministic = True)
+    
+    # generate a dictionary with position: count keys and values
+    labels = {0: 'short', 1:'cash', 2: 'long'}
+    x, counts = np.unique(actions_taken, return_counts=True)
+    labels_to_use = [labels[i] for i in x]
+    action_counts = {}
+    for i, j in zip(x, counts):
+        action_counts[labels[i]] = j
+    
+    # if you set the plot_actions variable to True, you get a barchart of actions taken
+    if plot_actions:
+        plt.bar(labels_to_use, counts, color = ['purple', 'goldenrod', 'olivedrab'])
+        plt.title('chosen actions over time')
+        plt.xlabel('action')
+        plt.ylabel('count')
+        plt.show()
+
+    return action_counts
+
+
 # a helper function for getting the gradients of the a2c network
 def get_action_gradients_(states_tf, action_vec, actor_net):
     with tf.GradientTape() as tape:
