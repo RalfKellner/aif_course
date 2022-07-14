@@ -104,7 +104,7 @@ def ai_trade_performance(environment, agent, seeds = [], num_plays = 20, plot_re
     return results, f_navs, m_navs
 
 # a function to analyze actions taken by a trained agent
-def analyze_actions_taken(environment, model, plot_actions = False):
+def analyze_actions_taken(environment, model, plot_actions = False, environment_new = False):
 
     '''
     Use this function to evaluate how many times the trained agent would choose the actions 
@@ -113,8 +113,12 @@ def analyze_actions_taken(environment, model, plot_actions = False):
     
     # get all scaled state variable realizations
     states = environment.data_source.get_scaled_df_full_()
-    # get a list of all actions taken in each state
-    actions_taken, _ = model.predict(states, deterministic = True)
+    if environment_new == True:
+        # get a list of all actions taken in each state
+        actions_taken, _ = model.predict(states[:, 1:], deterministic = True)
+    else:
+        # get a list of all actions taken in each state
+        actions_taken, _ = model.predict(states, deterministic = True)
     
     # generate a dictionary with position: count keys and values
     labels = {0: 'short', 1:'cash', 2: 'long'}

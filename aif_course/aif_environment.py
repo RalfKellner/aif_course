@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 # a class for downloading and processing of stock data
 class DataLoader():
-    def __init__(self, ticker, start_date, end_date, use_variables = [], scaler = None, trading_days = 252, open_close_return = False):
+    def __init__(self, ticker, start_date, end_date, use_variables = [], scaler = None, trading_days = 252):
 
         '''
         ticker (string): ticker for the company
@@ -27,7 +27,6 @@ class DataLoader():
         self.end_date = end_date
         self.use_variables = use_variables
         self.trading_days = trading_days
-        self.open_close_return = open_close_return
         
         self.load_data()
         self.preprocess_data()
@@ -69,12 +68,8 @@ class DataLoader():
         use_variables, list of strings: names of technical indicators to use, e.g., ['AD', 'ABER_ZG_5_15']
         if None, all indicators are used
         '''
-        if self.open_close_return == True:
-            # calculate return from the beginning of the next trading day until the end of the trading day
-            self.df.loc[:, 'returns'] = np.log(self.df.Close) - np.log(self.df.Open)
-        else:
-            # calculate returns
-            self.df.loc[:, 'returns'] = np.log(self.df.Close) - np.log(self.df.Close.shift(1))
+        # calculate returns
+        self.df.loc[:, 'returns'] = np.log(self.df.Close) - np.log(self.df.Close.shift(1))        
 
         # index of the return column to exclude raw data columns later
         idx = self.df.shape[1]
@@ -310,16 +305,14 @@ class TradingEnvironment(gym.Env):
                  trading_cost_bps=1e-3,
                  time_cost_bps=1e-4,
                  use_variables = [],
-                 scaler = None, 
-                 open_close_return = False):
+                 scaler = None):
         
         self.data_source = DataLoader(ticker = ticker,
                                       start_date = start_date,
                                       end_date = end_date,
                                       use_variables = use_variables,
                                       scaler = scaler,
-                                      trading_days = trading_days,
-                                      open_close_return = open_close_return)
+                                      trading_days = trading_days)
         
         self.simulator = TradingSimulator(trading_days = trading_days,
                                           trading_cost_bps = trading_cost_bps,
@@ -348,4 +341,112 @@ class TradingEnvironment(gym.Env):
         return self.data_source.take_step()[0]
 
 
+class TradingSimulatorNew:
+    def __init__(self, trading_costs_bps):
+        self.trading_costs_bps = trading_costs_bps
+        
+    def reset(self):
+        # in the beginning the agent is in the cash position
+        self.positions = [0]
+        # we assume one monetary unit is invested at the start
+        self.navs = [1]
+        # we assume one monetary unit is invested at the start for the buy and hold strategy
+        self.market_navs = [1]
+        # a list to collect daily returns of the agent
+        self.strategy_returns = []
+        # a list to collect daily returns of the buy and hold strategy
+        self.market_returns = []
+        # a list to collect daily actions of the agent
+        self.actions = []
+        
+    def take_step(self, action, target_return):
+        # at each step, get the previous position
+        start_position = self.positions[-1]
+        # get the desired new position by the action: positions are -1, 0, 1 for actions 0, 1, 2
+        new_position = action - 1
+        # determine the number of trades for calculating trading costs
+        n_trades = new_position - start_position
+        # the costs are a fraction of the number of trades
+        costs = abs(n_trades) * self.trading_costs_bps
+        # the rewards is the money the agent receives with the current position and waiting from t until t+1
+        reward = new_position * target_return - costs
+        # collect the information of this step
+        self.strategy_returns.append(reward)
+        self.market_returns.append(target_return)
+        self.navs.append(self.navs[-1] * np.exp(reward))
+        self.market_navs.append(self.market_navs[-1] * np.exp(target_return))
+        
+        info = {
+            'position_after_action': new_position,
+            'reward_gained_by_action': reward,
+            'nav_after_action': self.navs[-1],
+            'market_nav_after_action': self.market_navs[-1]
+        }
+        
+        return reward, info
+    
 
+# the full trading evironment class
+class TradingEnvironmentNew(gym.Env):
+    """A simple trading environment for reinforcement learning.
+    Provides daily observations for a stock price series
+    An episode is defined as a sequence of 252 trading days with random start
+    Each day is a 'step' that allows the agent to choose one of three actions:
+    - 0: SHORT
+    - 1: CASH
+    - 2: LONG
+    Trading has an optional cost (default: 10bps) of the change in position value.
+    Going from short to long implies two trades.
+    Not trading also incurs a default time cost of 1bps per step.
+    An episode begins with a starting Net Asset Value (NAV) of 1 unit of cash.
+    If the NAV drops to 0, the episode ends with a loss.
+    If the NAV hits 2.0, the agent wins.
+    The trading simulator tracks a buy-and-hold strategy as benchmark.
+    
+    The agent can choose among technical indicators as state variables.
+    The pandas_ta package is used for calculating technical indicatos during data preprocessing.
+    The default strategy is "all" which uses up to 276 technical indicators.
+    Besides, the following default strategies are implemented: "candles", "cycles", "momentum", "overlap",
+    "performance", "statistics", "trend", "volatility", "volume".
+    
+    """
+    def __init__(self,
+                 ticker='AAPL',
+                 start_date = '2012-01-01',
+                 end_date = '2017-12-31',
+                 trading_days=252,
+                 trading_costs_bps=1e-3,
+                 use_variables = [],
+                 scaler = None):
+        
+        self.data_source = DataLoader(ticker = ticker,
+                                      start_date = start_date,
+                                      end_date = end_date,
+                                      use_variables = use_variables,
+                                      scaler = scaler,
+                                      trading_days = trading_days)
+        
+        self.simulator = TradingSimulatorNew(trading_costs_bps = trading_costs_bps)
+        
+        self.action_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(self.data_source.min_values.values,
+                                            self.data_source.max_values.values)
+        self.reset()
+
+    def step(self, action):
+        """Returns state observation, reward, done and info"""
+        assert self.action_space.contains(action), '{} {} invalid'.format(action, type(action))
+        observation, done = self.data_source.take_step()
+        reward, info = self.simulator.take_step(action=action,
+                                                target_return=observation[0])
+        return observation[1:], reward, done, info
+
+    def reset(self, seed = None):
+        """Resets DataSource and TradingSimulator; returns first observation"""
+        if seed:
+            self.data_source.reset(seed = seed)
+        else:
+            self.data_source.reset()
+        self.simulator.reset()
+        return self.data_source.take_step()[0][1:]
+    
